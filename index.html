@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  stroke: #000;
+}
+
+</style>
+<body>
+<!--Import the D3 Library (version 4 in this case)-->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/queue.v1.min.js"></script>
+<script src="https://d3js.org/topojson.v1.min.js"></script>
+<script>
+
+// Set up the bounds of the visualization
+var margin = {top: 0, right: 0, bottom: 0, left: 0},
+    width = 1000 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var color = d3.scaleSequential(d3.interpolateViridis);
+
+var path = d3.geoPath();
+
+var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append('g')
+            .attr('class', 'map');
+
+var projection = d3.geoMercator()
+                   .scale(130)
+                  .translate( [width / 2, height / 1.5]);
+
+var path = d3.geoPath().projection(projection);
+
+// Set up an SVG that gives us a canvas to draw on
+var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .style('overflow', 'visible')
+            .append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+queue()
+    .defer(d3.json, "world_countries.json")
+    .defer(d3.csv, "20171013111831-SurveyExport.csv")
+    .await(ready);
+
+// Import the data. Most of the drawing code goes in here.
+function ready(error, map, data) {
+  var surveyCountByName = {};
+
+  data.forEach(function(d,i) {
+    var country = d["Country or Region (optional)"] ? d["Country or Region (optional)"] : d["Country"]
+    if (i==14) {console.log(d["Country or Region (optional)"], country)};
+    if (country in surveyCountByName) {
+      surveyCountByName[country] += 1
+    } else {
+      surveyCountByName[country] = 1
+    }
+  });
+
+  console.log(surveyCountByName);
+  color.domain([0,35000]);
+  svg.append("g")
+      .attr("class", "countries")
+    .selectAll("path")
+      .data(map.features)
+    .enter().append("path")
+      .attr("d", path)
+      .style("fill", function(d) { if(!(d.properties.name in surveyCountByName)){console.log(d.properties.name)};return color(surveyCountByName[d.properties.name]); })
+      .style('stroke', 'white')
+      .style('stroke-width', 1.5)
+      .style("opacity",0.8)
+      // tooltips
+        .style("stroke","white")
+        .style('stroke-width', 0.3)
+        .on('mouseover',function(d){
+
+          d3.select(this)
+            .style("opacity", 1)
+            .style("stroke","white")
+            .style("stroke-width",3);
+        })
+        .on('mouseout', function(d){
+
+          d3.select(this)
+            .style("opacity", 0.8)
+            .style("stroke","white")
+            .style("stroke-width",0.3);
+        });
+
+  svg.append("path")
+      .datum(topojson.mesh(map.features, function(a, b) { return a.id !== b.id; }))
+       // .datum(topojson.mesh(data.features, function(a, b) { return a !== b; }))
+      .attr("class", "names")
+      .attr("d", path);
+};
+</script>
