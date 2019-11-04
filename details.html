@@ -20,6 +20,7 @@ body {
 
 </style>
 <body>
+<h2 id="country"></h2>
 <div class="section">
 <svg id="question0" height="500" width="300"></svg>
 <div id="question0Text">
@@ -45,6 +46,11 @@ body {
 <div id="question4Text">
 </div>
 </div>
+<div class="section">
+<svg id="question5" height="500" width="300"></svg>
+<div id="question5Text">
+</div>
+</div>
 <!--Import the D3 Library (version 4 in this case)-->
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/queue.v1.min.js"></script>
@@ -66,6 +72,8 @@ var y = d3.scaleLinear()
 
 var color = d3.scaleOrdinal()
     .range(["#ccc", "#ffd700","#ffb14e","#fa8775","#ea5f94","#cd34b5","#9d02d7","#0000ff"]);
+
+d3.select("#country").text(country);
 
 queue()
     .defer(d3.csv, "20171013111831-SurveyExport.csv")
@@ -152,6 +160,15 @@ function ready(error, data) {
 
     console.log(series);
 
+    svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", height - margin.bottom)
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        .style("text-decoration", "underline") 
+        .attr("fill", "black") 
+        .text(question);
+
     svg.append("g")
       .selectAll("g")
       .data(series)
@@ -165,10 +182,6 @@ function ready(error, data) {
         .attr("y", function(d) { return y(d[1]); })
         .attr("height", function(d) { return y(d[0]) - y(d[1]); })
 
-    svg.append("g")
-        .attr("class", "axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisTop(x));
   
   });
 
