@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  stroke: #000;
+}
+
+</style>
+<body>
+<!--Import the D3 Library (version 4 in this case)-->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/queue.v1.min.js"></script>
+<script src="https://d3js.org/topojson.v1.min.js"></script>
+<script>
+var urlParams = new URLSearchParams(window.location.search);
+console.log(urlParams.has('country'));
+console.log(urlParams.get('country'));
+
+queue()
+    .defer(d3.csv, "20171013111831-SurveyExport.csv")
+    .await(ready);
+
+var questions = ["I consider myself:", "Thinking about a future in which so much of your world is connected to the internet leaves you feeling:", "What are you most excited about as we move toward a more digitally connected future?", "What is your biggest fear as we move towards a more connected future?", "Who is most responsible for protecting the online safety, privacy, and security of the connected apps and devices you own?", "Who do you most trust to help you learn how to protect your safety, security and privacy online?"]
+
+// Import the data. Most of the drawing code goes in here.
+function getAnswerCounts(values, question, length) {
+  var dict = {}
+  values.forEach(function(d) {
+    var answer = d[question];
+    if (answer in dict) {
+      dict[answer] += 1
+    } else {
+      dict[answer] = 1
+    }
+  });
+
+  // for (var key in dict) {
+  //   dict[key] = Math.round((dict[key] / length) * 100,);
+  // }
+  return dict;
+}
+function ready(error, data) {
+  var grouped = d3.nest().key(function(d){
+                      return (d["Country or Region (optional)"] ? d["Country or Region (optional)"] : d["Country"]); })
+                  .rollup(function(v) {
+                    var results = {}
+                    var length = v.length;
+                    questions.forEach(function(question) {
+                      results[question] = getAnswerCounts(v, question, length);
+                    });
+                    return results;
+                  })
+                  .entries(data);
+  console.log(grouped);
+};
+</script>
