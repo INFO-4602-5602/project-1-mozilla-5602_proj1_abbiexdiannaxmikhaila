@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.tooltip{
+  position: absolute;
+  font-size: 12px;
+  width: auto;
+  height: auto;
+  pointer-events:none;
+  background-color: white;
+}
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  stroke: #000;
+}
+
+</style>
+<body>
+<!--Import the D3 Library (version 4 in this case)-->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<!--Source: https://bl.ocks.org/sebg/6f7f1dd55e0c52ce5ee0dac2b2769f4b-->
+<script>
+
+// Set up the bounds of the visualization
+var margin = {top: 20, right: 20, bottom: 30, left: 40};
+var width = 960 - margin.right - margin.left;
+var height = 500 - margin.top - margin.bottom;
+
+// Set up the scales (the pieces that will convert from the data to the screen)
+var x = d3.scaleLinear()
+          .range([0, width]);
+
+var y = d3.scaleLinear()
+          .range([height, 0]);
+
+var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+// Set up the scaffolds
+var xAxis = d3.axisBottom(x);
+var yAxis = d3.axisLeft(y);
+
+// Set up an SVG that gives us a canvas to draw on
+var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+              .attr("transform", "translate("+margin.left + "," + margin.top + ")");
+
+              svg.append("text")
+                    .attr("x", (width / 2))
+                    .attr("y", 0 - (margin.top / 3))
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "16px")
+                    .style("text-decoration", "underline")
+                    .text("Can knowledge lead to fear?");
+
+// Import the data. Most of the drawing code goes in here.
+d3.csv("surveyexport.csv", function(error, data) {
+  if (error) throw error;
+
+  x_answers =
+    ["", "Ultra Nerd:  I build my own computers, run my own servers, code my own apps. I'm basically Mr. Robot.", "Technically Savvy:   I know my way around a computer pretty well. When anyone in my family needs technical help, I'm the one they call.", "Average User:   I know enough to get by.", "Luddite:  Technology scares me! I only use it when I have to."]
+  y_answers =
+    ["", "Super excited! I can't wait for everything to be connected. My life will be so much better.", "Cautiously optimistic. I'm hopeful we're building a better world by becoming more connected in everything we do.", "On the fence.  I'm not sure about all this. I think I'll wait and see.", "A little wary. All this being connected to the internet in every part of our lives makes me a little nervous. What's going to happen to our privacy?", "Scared as hell. The future where everything is connected has me scared senseless. We're all doomed!"]
+  // Loop through the data and convert the numeric columns to numbers
+  data.forEach(function(d){
+    // We can treat data as an object with brackets
+    d["Rank"] = +d["Rank"];
+    d["Frequency"] = +d["Frequency"];
+
+    // Or using dot notation
+    d.TFIDF = +d.TFIDF;
+    d["Document Frequency"] = +d["Document Frequency"];
+
+    // Print things out to double check that everything looks ok
+    console.log(d);
+    })
+
+  // Create some variables that let us hold the different columns we'll want to index into
+  var x_val = "I consider myself:";
+  var y_val = "Thinking about a future in which so much of your world is connected to the internet leaves you feeling:";
+  var color_val = "Country";
+
+  var groupedData = d3.nest()
+      .key(function(d) { return d.Country; })
+      .rollup(function(v) { return v.length; })
+      // {
+
+  // Specify the bounds on the scales now that we have some data
+  x.domain(d3.extent(data, function(d){ return d[x_val];})).nice();
+  y.domain(d3.extent(data, function(d){ return d[y_val];})).nice();
+  color.domain(d3.extent(data, function(d) { return d[color_val];}));
+
+  // Specify the parameters on the x-axis and draw it
+  svg.append("g")
+     .attr("class", "x axis")
+     .attr("transform", "translate(0," + height + ")")
+     .call(xAxis)
+     .append("text")
+        .attr("class", "label")
+        .attr("x", width)
+        .attr("y",-6)
+        .style("text-anchor", "end")
+        .text(x_val);
+
+  // Specify the parameters on the y-axis and draw it
+  svg.append("g")
+     .attr("class", "y axis")
+     .call(yAxis)
+     .append("text")
+        .attr("class", "label")
+        .attr("transform", "rotate(-90)")
+        .attr("y",6)
+        .style("text-anchor", "end")
+        .text(y_val);
+
+        svg.append("text")
+                 .attr("transform", "rotate(-90)")
+                 .attr("y", 0 - margin.left)
+                 .attr("x",0 - (height / 2))
+                 .attr("dy", "1em")
+                 .style("text-anchor", "middle")
+                 .style("font-size", "13px")
+                 .style("text-decoration", "bold")
+                 .text("Fear of the Future");
+
+  // Specify the parameters of a mark
+  svg.selectAll(".dot")
+     .data(data)
+     .enter().append("circle")
+        .attr("class","dot")
+        .attr("r", 3.5)
+        .attr("cx", function(d){
+          return x(d[x_val]);
+        })
+        .attr("cy", function(d){
+          return y(d[y_val]);
+        })
+        .style("fill", function(d) {
+          return color(d[color_val]);
+        })
+        .on("mouseover", function(d) {
+          d3.select(this)
+            .transition()
+            .duration(500)
+            .attr("r", d[color_val]/2);
+        })
+        .on("mouseout", function(d){
+          d3.select(this)
+          .transition()
+          .duration(550)
+            .attr("r", 3.5);
+        })
+
+        var legend = svg.selectAll(".legend")
+                        .data(color.domain())
+                        .enter().append("g")
+                        .attr("class", "legend")
+                        .attr("transform", function(d, i){
+                          return "translate(0," + (i * 20) + ")"
+                        });
+        legend.append("rect")
+              .attr("x", width - 18)
+              .attr("width", 18)
+              .attr("height", 18)
+              .style("fill", color);
+
+        legend.append("text")
+              .attr("x", width - 24)
+              .attr("y", 9)
+              .attr("dy", ".35em")
+              .style("text-anchor", "end")
+              .text(function(d){return d;})
+
+});
+
+</script>
