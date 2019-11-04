@@ -6,6 +6,17 @@
 body {
   font: 10px sans-serif;
 }
+div.tooltip {
+    position: absolute;
+    text-align: left;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+    display: inline-block;
+}
 
 .axis path,
 .axis line {
@@ -18,35 +29,52 @@ body {
   stroke: #000;
 }
 
+.section {
+  padding: 1rem;
+  box-sizing: border-box;
+  width: 50%;
+  float: left;
+}
+
+.title {
+  width: 400px;
+}
+
 </style>
 <body>
-<h2 id="country"></h2>
+<h1 id="country"></h1>
 <div class="section">
-<svg id="question0" height="500" width="300"></svg>
+<h3 id="question0Title" class="title"></h3>
+<svg id="question0" class="chart" height="500" width="300"></svg>
 <div id="question0Text">
 </div>
 </div>
 <div class="section">
+<h3 id="question1Title" class="title"></h3>
 <svg id="question1" height="500" width="300"></svg>
 <div id="question1Text">
 </div>
 </div>
 <div class="section">
+<h3 id="question2Title" class="title"></h3>
 <svg id="question2" height="500" width="300"></svg>
 <div id="question2Text">
 </div>
 </div>
 <div class="section">
+<h3 id="question3Title" class="title"></h3>
 <svg id="question3" height="500" width="300"></svg>
 <div id="question3Text">
 </div>
 </div>
 <div class="section">
+<h3 id="question4Title" class="title"></h3>
 <svg id="question4" height="500" width="300"></svg>
 <div id="question4Text">
 </div>
 </div>
 <div class="section">
+<h3 id="question5Title" class="title"></h3>
 <svg id="question5" height="500" width="300"></svg>
 <div id="question5Text">
 </div>
@@ -61,6 +89,10 @@ var country = urlParams.has('country') ? urlParams.get('country') : "United Stat
 var margin = {top: 20, right: 20, bottom: 30, left: 60},
     width = 300 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
+
+var tooltip = d3.select("body").append("div")
+    .attr("class","tooltip")
+    .style("opacity", 0);
 
 // set the ranges
 var x = d3.scaleBand()
@@ -131,18 +163,12 @@ function ready(error, data) {
                   })
                   .entries(data);
 
-  grouped[0].value.forEach(function(d) {
-    console.log(d.question);
-    for (var key in d) {
-      console.log(key);
-    }
-  });
   // create the svg
   questions.forEach(function(question, i) {
-
-
+    d3.select(`#question${i}Title`).text(question)
+    
     var svg = d3.select(`#question${i}`),
-        margin = {top: 20, right: 20, bottom: 30, left: 40},
+        margin = {top: 0, right: 0, bottom: 10, left: 0},
         width = +svg.attr("width") - margin.left - margin.right,
         height = +svg.attr("height") - margin.top - margin.bottom;
 
@@ -154,26 +180,18 @@ function ready(error, data) {
     color.domain(keys);
 
     var questionData = [countryData[i]];
-    
+
 
     var series = d3.stack().keys(keys).offset(d3.stackOffsetDiverging)(questionData);
 
-    console.log(series);
-
-    svg.append("text")
-        .attr("x", (width / 2))             
-        .attr("y", height - margin.bottom)
-        .attr("text-anchor", "middle")  
-        .style("font-size", "16px") 
-        .style("text-decoration", "underline") 
-        .attr("fill", "black") 
-        .text(question);
+    // console.log(series);
 
     svg.append("g")
       .selectAll("g")
       .data(series)
       .enter().append("g")
         .attr("fill", function(d) { return color(d.key); })
+        .attr("id", function(d){console.log(d.key);return d.key;})
       .selectAll("rect")
       .data(function(d) { return d; })
       .enter().append("rect")
@@ -181,8 +199,36 @@ function ready(error, data) {
         .attr("x", function(d) { return x(d.data.question); })
         .attr("y", function(d) { return y(d[1]); })
         .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+        .style("opacity", 0.8)
+        .style("stroke","white")
+        .style("stroke-width",0.3)
+      .on('mouseover',function(d){
 
-  
+          d3.select(this)
+            .style("opacity", 1)
+            .style("stroke","white")
+            .style("stroke-width",3);
+
+          var response = this.parentElement.id ? this.parentElement.id : "No Response"; 
+          var surveyResponses = d.data[response] ? d.data[response] : 0;
+          tooltip.transition()
+            .duration(200)
+            .style("opacity", .9);
+          tooltip.html(response + "<br/>Count: " + surveyResponses)
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY - 28) + "px" );
+        })
+        .on('mouseout', function(d){
+
+          d3.select(this)
+            .style("opacity", 0.8)
+            .style("stroke","white")
+            .style("stroke-width",0.3);
+
+          tooltip.transition()
+            .duration(500)
+            .style("opacity", 0);
+        })
   });
 
 };
