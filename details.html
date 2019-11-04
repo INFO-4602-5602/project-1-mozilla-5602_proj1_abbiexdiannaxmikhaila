@@ -84,7 +84,7 @@ div.tooltip {
 <div class="header">
   <div class="button-group">
     <a href="/index.html" class="button world icon"></a>
-    <a href="#" class="button icon scatterplot"></a>
+    <a href="/scatter.html" class="button icon scatterplot"></a>
   </div>
 </div>
 <div>
@@ -210,6 +210,7 @@ function getAnswerCounts(values, question, i) {
     }
   });
 
+  // if there were any unchosen answers, make their count 0
   a.forEach(function(d) {
     if (!(d in dict)) {
       dict[d] = 0;

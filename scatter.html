@@ -26,23 +26,45 @@ body {
   stroke: #000;
 }
 
+div.tooltip {
+    position: absolute;
+    text-align: left;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+    display: inline-block;
+}
+
 </style>
 <body>
 <!--Import the D3 Library (version 4 in this case)-->
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <!--Source: https://bl.ocks.org/sebg/6f7f1dd55e0c52ce5ee0dac2b2769f4b-->
 <script>
+var URL = "http://localhost:8000"
 
+function getRandomNum(range) {
+  var num = Math.floor(Math.random()*range) + 1; // this will get a number between 1 and 99;
+  num *= Math.floor(Math.random()*2) == 1 ? 1 : -1; // this will add minus sign in 50% of cases
+  return num;
+}
+var tooltip = d3.select("body").append("div")
+    .attr("class","tooltip")
+    .style("opacity", 0);
 // Set up the bounds of the visualization
-var margin = {top: 20, right: 20, bottom: 30, left: 40};
-var width = 960 - margin.right - margin.left;
-var height = 500 - margin.top - margin.bottom;
+var margin = {top: 20, right: 20, bottom: 30, left: 300};
+var width = 1200 - margin.right - margin.left;
+var height = 650 - margin.top - margin.bottom;
 
 // Set up the scales (the pieces that will convert from the data to the screen)
-var x = d3.scaleLinear()
-          .range([0, width]);
+var x = d3.scaleBand()
+          .range([0, width])
+          .padding(0.1);
 
-var y = d3.scaleLinear()
+var y = d3.scaleBand()
           .range([height, 0]);
 
 var color = d3.scaleOrdinal(d3.schemeCategory20);
@@ -64,67 +86,121 @@ var svg = d3.select("body").append("svg")
                     .attr("text-anchor", "middle")
                     .style("font-size", "16px")
                     .style("text-decoration", "underline")
-                    .text("Can knowledge lead to fear?");
-
+                    .text("Is there a connection between technical knowledge and fear?");
+function wrap(text, width) {
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr("y"),
+        dy = parseFloat(text.attr("dy")),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+      }
+    }
+  });
+}
 // Import the data. Most of the drawing code goes in here.
-d3.csv("surveyexport.csv", function(error, data) {
-  if (error) throw error;
-
-  x_answers =
-    ["", "Ultra Nerd:  I build my own computers, run my own servers, code my own apps. I'm basically Mr. Robot.", "Technically Savvy:   I know my way around a computer pretty well. When anyone in my family needs technical help, I'm the one they call.", "Average User:   I know enough to get by.", "Luddite:  Technology scares me! I only use it when I have to."]
-  y_answers =
-    ["", "Super excited! I can't wait for everything to be connected. My life will be so much better.", "Cautiously optimistic. I'm hopeful we're building a better world by becoming more connected in everything we do.", "On the fence.  I'm not sure about all this. I think I'll wait and see.", "A little wary. All this being connected to the internet in every part of our lives makes me a little nervous. What's going to happen to our privacy?", "Scared as hell. The future where everything is connected has me scared senseless. We're all doomed!"]
-  // Loop through the data and convert the numeric columns to numbers
-  data.forEach(function(d){
-    // We can treat data as an object with brackets
-    d["Rank"] = +d["Rank"];
-    d["Frequency"] = +d["Frequency"];
-
-    // Or using dot notation
-    d.TFIDF = +d.TFIDF;
-    d["Document Frequency"] = +d["Document Frequency"];
-
-    // Print things out to double check that everything looks ok
-    console.log(d);
-    })
-
+d3.csv("20171013111831-SurveyExport.csv", function(error, data) {
   // Create some variables that let us hold the different columns we'll want to index into
   var x_val = "I consider myself:";
   var y_val = "Thinking about a future in which so much of your world is connected to the internet leaves you feeling:";
   var color_val = "Country";
 
-  var groupedData = d3.nest()
-      .key(function(d) { return d.Country; })
-      .rollup(function(v) { return v.length; })
-      // {
+  if (error) throw error;
+
+  var grouped = d3.nest().key(function(d){
+                      return (d["Country or Region (optional)"] ? d["Country or Region (optional)"] : d["Country"]); })
+                  .key(function(d) {
+                    return d[x_val];
+                  })
+                  .key(function(d) {
+                    return d[y_val]
+                  })
+                  .entries(data);
+  // console.log(grouped);
+
+  var collasped = []
+  var totals = {}
+
+  grouped.forEach(function(c,i) {
+    var country = c.key;
+    var count = 0;
+    if (country != "" && country != "Anonymous Proxy") {
+      c.values.forEach(function(x, i) {
+        var xanswer = x.key;
+        if (xanswer != "") {
+          x.values.forEach(function(y,i) {
+            var yanswer = y.key;
+            if (yanswer != "") {
+              var item = {};
+              item[x_val] = xanswer;
+              item[y_val] = yanswer;
+              item[color_val] = country;
+              item['length'] = y.values.length;
+              collasped.push(item);
+              count += item['length'];
+            }
+          })
+        }
+      })
+      totals[country] = count;
+    }
+  })
+  console.log(totals);
+
+  x_answers =
+    ["Luddite:  Technology scares me! I only use it when I have to.", "Average User:   I know enough to get by.", "Technically Savvy:   I know my way around a computer pretty well. When anyone in my family needs technical help, I'm the one they call.", "Ultra Nerd:  I build my own computers, run my own servers, code my own apps. I'm basically Mr. Robot."]
+  y_answers =
+    ["Super excited! I can't wait for everything to be connected. My life will be so much better.", "Cautiously optimistic. I'm hopeful we're building a better world by becoming more connected in everything we do.", "On the fence.  I'm not sure about all this. I think I'll wait and see.", "A little wary. All this being connected to the internet in every part of our lives makes me a little nervous. What's going to happen to our privacy?", "Scared as hell. The future where everything is connected has me scared senseless. We're all doomed!"]
+
+  // Loop through the data and convert the numeric columns to numbers
+  var countries = [];
+  data.forEach(function(d) {
+    var c = d["Country or Region (optional)"] ? d["Country or Region (optional)"] : d["Country"];
+    if (countries.indexOf(c) == -1) {
+      countries.push(c);
+    }
+  });
+
+  
+
 
   // Specify the bounds on the scales now that we have some data
-  x.domain(d3.extent(data, function(d){ return d[x_val];})).nice();
-  y.domain(d3.extent(data, function(d){ return d[y_val];})).nice();
-  color.domain(d3.extent(data, function(d) { return d[color_val];}));
+  x.domain(x_answers);
+  y.domain(y_answers);
+  color.domain(countries.sort());
+
+
 
   // Specify the parameters on the x-axis and draw it
   svg.append("g")
-     .attr("class", "x axis")
-     .attr("transform", "translate(0," + height + ")")
-     .call(xAxis)
-     .append("text")
-        .attr("class", "label")
-        .attr("x", width)
-        .attr("y",-6)
-        .style("text-anchor", "end")
-        .text(x_val);
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+    .selectAll(".tick text")
+      .call(wrap, x.bandwidth());
+        // .call(wrap, x.rangeBand());
 
   // Specify the parameters on the y-axis and draw it
   svg.append("g")
      .attr("class", "y axis")
      .call(yAxis)
-     .append("text")
-        .attr("class", "label")
-        .attr("transform", "rotate(-90)")
-        .attr("y",6)
-        .style("text-anchor", "end")
-        .text(y_val);
+        .selectAll(".tick text")
+              .call(wrap, 300);
+
+
+            
 
         svg.append("text")
                  .attr("transform", "rotate(-90)")
@@ -138,51 +214,59 @@ d3.csv("surveyexport.csv", function(error, data) {
 
   // Specify the parameters of a mark
   svg.selectAll(".dot")
-     .data(data)
+     .data(collasped)
      .enter().append("circle")
         .attr("class","dot")
-        .attr("r", 3.5)
+        .style("opacity", 0.8)
+        .attr("r", function(d) {
+          var l = d['length'];
+          var t = totals[d[color_val]];
+          return (l/t) * 30;
+        })
         .attr("cx", function(d){
-          return x(d[x_val]);
+          var cx = x(d[x_val]) + (x.bandwidth()/2) + getRandomNum(90)
+          return cx;
         })
         .attr("cy", function(d){
-          return y(d[y_val]);
+          var cy = y(d[y_val]) + 50 + getRandomNum(40)
+          return cy;
         })
         .style("fill", function(d) {
           return color(d[color_val]);
         })
-        .on("mouseover", function(d) {
+      .on('mouseover',function(d){
+
           d3.select(this)
-            .transition()
+            .style("opacity", 1)
+            .style("stroke","black")
+            .style("stroke-width",3);
+
+          var country = d['Country'] 
+          var surveyResponses = d['length']
+          var total = totals[country]
+          tooltip.transition()
+            .duration(200)
+            .style("opacity", .9);
+          tooltip.html(country + "<br/>Count: " + surveyResponses + "  (n=" + total +")")
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY - 28) + "px" );
+        })
+        .on('mouseout', function(d){
+
+          d3.select(this)
+            .style("opacity", 0.8)
+            .style("stroke","black")
+            .style("stroke-width",1);
+
+          tooltip.transition()
             .duration(500)
-            .attr("r", d[color_val]/2);
+            .style("opacity", 0);
         })
-        .on("mouseout", function(d){
-          d3.select(this)
-          .transition()
-          .duration(550)
-            .attr("r", 3.5);
-        })
+        .on('click', function(d) {
+          window.location = URL + "/details.html?country=" + d['Country'];
+        });
 
-        var legend = svg.selectAll(".legend")
-                        .data(color.domain())
-                        .enter().append("g")
-                        .attr("class", "legend")
-                        .attr("transform", function(d, i){
-                          return "translate(0," + (i * 20) + ")"
-                        });
-        legend.append("rect")
-              .attr("x", width - 18)
-              .attr("width", 18)
-              .attr("height", 18)
-              .style("fill", color);
-
-        legend.append("text")
-              .attr("x", width - 24)
-              .attr("y", 9)
-              .attr("dy", ".35em")
-              .style("text-anchor", "end")
-              .text(function(d){return d;})
+          
 
 });
 

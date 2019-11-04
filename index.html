@@ -71,6 +71,7 @@ queue()
     .defer(d3.csv, "20171013111831-SurveyExport.csv")
     .await(ready);
 
+
 // Import the data. Most of the drawing code goes in here.
 function ready(error, map, data) {
   var surveyCountByName = {};
