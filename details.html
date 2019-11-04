@@ -20,14 +20,52 @@ body {
 
 </style>
 <body>
+<div class="section">
+<svg id="question0" height="500" width="300"></svg>
+<div id="question0Text">
+</div>
+</div>
+<div class="section">
+<svg id="question1" height="500" width="300"></svg>
+<div id="question1Text">
+</div>
+</div>
+<div class="section">
+<svg id="question2" height="500" width="300"></svg>
+<div id="question2Text">
+</div>
+</div>
+<div class="section">
+<svg id="question3" height="500" width="300"></svg>
+<div id="question3Text">
+</div>
+</div>
+<div class="section">
+<svg id="question4" height="500" width="300"></svg>
+<div id="question4Text">
+</div>
+</div>
 <!--Import the D3 Library (version 4 in this case)-->
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/queue.v1.min.js"></script>
 <script src="https://d3js.org/topojson.v1.min.js"></script>
 <script>
 var urlParams = new URLSearchParams(window.location.search);
-console.log(urlParams.has('country'));
-console.log(urlParams.get('country'));
+var country = urlParams.has('country') ? urlParams.get('country') : "United States";
+var margin = {top: 20, right: 20, bottom: 30, left: 60},
+    width = 300 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+// set the ranges
+var x = d3.scaleBand()
+          .range([0, width])
+          .padding(0.1);
+
+var y = d3.scaleLinear()
+          .range([height, 0]);
+
+var color = d3.scaleOrdinal()
+    .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
 
 queue()
     .defer(d3.csv, "20171013111831-SurveyExport.csv")
@@ -35,8 +73,17 @@ queue()
 
 var questions = ["I consider myself:", "Thinking about a future in which so much of your world is connected to the internet leaves you feeling:", "What are you most excited about as we move toward a more digitally connected future?", "What is your biggest fear as we move towards a more connected future?", "Who is most responsible for protecting the online safety, privacy, and security of the connected apps and devices you own?", "Who do you most trust to help you learn how to protect your safety, security and privacy online?"]
 
+answers = [
+  ["", "Ultra Nerd:  I build my own computers, run my own servers, code my own apps. I'm basically Mr. Robot.", "Technically Savvy:   I know my way around a computer pretty well. When anyone in my family needs technical help, I'm the one they call.", "Average User:   I know enough to get by.", "Luddite:  Technology scares me! I only use it when I have to."],
+  ["", "Super excited! I can't wait for everything to be connected. My life will be so much better.", "Cautiously optimistic. I'm hopeful we're building a better world by becoming more connected in everything we do.", "On the fence.  I'm not sure about all this. I think I'll wait and see.", "A little wary. All this being connected to the internet in every part of our lives makes me a little nervous. What's going to happen to our privacy?", "Scared as hell. The future where everything is connected has me scared senseless. We're all doomed!"],
+  ["" ,"How easy it will make life", "How much fun it will be", "How it will make us all smarter and better educated", "How it will bring the world together", "None of the above", "Other (please specify)"],
+  ["", "The loss of privacy", "We'll be less safe", "We'll lose touch with one another", "I have no fears about a more connected future", "Other (please specify)"],
+  ["", "The makers of those apps and devices should build safety and privacy into their products' features.", "It's up to me to protect myself online", "The government should create policies and rules to ensure these devices are safe and secure", "I honestly don't know"],
+  ["", "The makers of connected devices and apps", "My friends and family", "Non-profit organizations like Mozilla and Consumer Reports", "The government", "The media", "I just don't know who to trust"]
+]
+
 // Import the data. Most of the drawing code goes in here.
-function getAnswerCounts(values, question, length) {
+function getAnswerCounts(values, question) {
   var dict = {}
   values.forEach(function(d) {
     var answer = d[question];
@@ -47,23 +94,83 @@ function getAnswerCounts(values, question, length) {
     }
   });
 
-  // for (var key in dict) {
-  //   dict[key] = Math.round((dict[key] / length) * 100,);
-  // }
   return dict;
+}
+
+function getItemValue(data, item) {
+  var result = null;
+  data.forEach(function(d) {
+    // console.log(d.key);
+    if (d.key === item) {
+      result = d.value;
+    }
+  });
+  return result;
 }
 function ready(error, data) {
   var grouped = d3.nest().key(function(d){
                       return (d["Country or Region (optional)"] ? d["Country or Region (optional)"] : d["Country"]); })
                   .rollup(function(v) {
-                    var results = {}
+                    var results = []
                     var length = v.length;
                     questions.forEach(function(question) {
-                      results[question] = getAnswerCounts(v, question, length);
+                      var items = getAnswerCounts(v, question);
+                      items['question'] = question;
+                      items["length"] = length;
+                      results.push(items);
                     });
                     return results;
                   })
                   .entries(data);
-  console.log(grouped);
+
+  grouped[0].value.forEach(function(d) {
+    console.log(d.question);
+    for (var key in d) {
+      console.log(key);
+    }
+  });
+  // create the svg
+  questions.forEach(function(question, i) {
+
+
+    var svg = d3.select(`#question${i}`),
+        margin = {top: 20, right: 20, bottom: 30, left: 40},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom;
+
+    var countryData = getItemValue(grouped, country);
+    var keys = answers[i];
+    // console.log(countryData);
+    x.domain([question]);
+    y.domain([0, countryData[i]["length"]])
+    color.domain(keys);
+
+    var questionData = [countryData[i]];
+    
+
+    var series = d3.stack().keys(keys).offset(d3.stackOffsetDiverging)(questionData);
+
+    console.log(series);
+
+    svg.append("g")
+      .selectAll("g")
+      .data(series)
+      .enter().append("g")
+        .attr("fill", function(d) { return color(d.key); })
+      .selectAll("rect")
+      .data(function(d) { return d; })
+      .enter().append("rect")
+        .attr("width", x.bandwidth)
+        .attr("x", function(d) { return x(d.data.question); })
+        .attr("y", function(d) { return y(d[1]); })
+        .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisTop(x));
+  
+  });
+
 };
 </script>
