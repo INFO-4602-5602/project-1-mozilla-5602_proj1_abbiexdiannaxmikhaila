@@ -18,6 +18,18 @@ body {
   stroke: #000;
 }
 
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+    display: inline-block;
+}
+
 </style>
 <body>
 <!--Import the D3 Library (version 4 in this case)-->
@@ -48,6 +60,10 @@ var projection = d3.geoMercator()
 
 var path = d3.geoPath().projection(projection);
 
+var tooltip = d3.select("body").append("div")
+    .attr("class","tooltip")
+    .style("opacity", 0);
+
 queue()
     .defer(d3.json, "world_countries.json")
     .defer(d3.csv, "20171013111831-SurveyExport.csv")
@@ -59,7 +75,7 @@ function ready(error, map, data) {
 
   data.forEach(function(d,i) {
     var country = d["Country or Region (optional)"] ? d["Country or Region (optional)"] : d["Country"]
-    
+    console.log(d)
     if (country in surveyCountByName) {
       surveyCountByName[country] += 1
     } else {
@@ -70,7 +86,6 @@ function ready(error, map, data) {
   (map.features).forEach(function(d) {
     countries.push(d.properties.name);
   })
-  console.log(countries);
 
   for (var key in surveyCountByName) {
     if (countries.indexOf(key) < 0) {
@@ -98,6 +113,15 @@ function ready(error, map, data) {
             .style("opacity", 1)
             .style("stroke","white")
             .style("stroke-width",3);
+
+          var countryName = d.properties.name;
+          var surveyResponses = surveyCountByName[d.properties.name] ? surveyCountByName[d.properties.name] : 0;
+          tooltip.transition()
+            .duration(200)
+            .style("opacity", .9);
+          tooltip.html(countryName + "<br/>" + surveyResponses + " responses")
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY - 28) + "px" );
         })
         .on('mouseout', function(d){
 
@@ -105,6 +129,10 @@ function ready(error, map, data) {
             .style("opacity", 0.8)
             .style("stroke","white")
             .style("stroke-width",0.3);
+
+          tooltip.transition()
+            .duration(500)
+            .style("opacity", 0);
         });
 
   svg.append("path")
