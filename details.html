@@ -6,6 +6,11 @@
 body {
   font: 10px sans-serif;
 }
+
+h1 {
+  padding-top: .8rem;
+}
+
 div.tooltip {
     position: absolute;
     text-align: left;
@@ -39,45 +44,82 @@ div.tooltip {
 .title {
   width: 400px;
 }
+.button-group {
+  display: inline-block;
+}
 
+.button:not(:last-child) {
+}
+
+.button {
+  padding: 5px;
+  display: inline-block;
+  margin-right: 5px;
+}
+
+.button:hover {
+  opacity: .65;
+}
+
+.icon {
+  opacity: .8;
+}
+
+.icon {
+  height: 50px;
+  width: 50px;
+}
+
+.world {
+  background: url("/icons/world.svg") no-repeat scroll right center ;
+  background-origin: content-box;
+}
+
+.scatterplot {
+  background: url("/icons/scatterplot.svg") no-repeat scroll right center ;
+  background-origin: content-box;
+}
 </style>
 <body>
-<h1 id="country"></h1>
+<div class="header">
+  <div class="button-group">
+    <a href="/index.html" class="button world icon"></a>
+    <a href="#" class="button icon scatterplot"></a>
+  </div>
+</div>
+<div>
+<h1 id="loading">Loading.....</h1>
+<h1 style="display:none;" id="country"></h1>
+</div>
 <div class="section">
 <h3 id="question0Title" class="title"></h3>
-<svg id="question0" class="chart" height="500" width="300"></svg>
-<div id="question0Text">
-</div>
+<svg id="question0" class="chart" height="500" width="200"></svg>
+<svg id="question0Text" height="500" width="300"></svg>
 </div>
 <div class="section">
 <h3 id="question1Title" class="title"></h3>
-<svg id="question1" height="500" width="300"></svg>
-<div id="question1Text">
-</div>
+<svg id="question1" height="500" width="200"></svg>
+<svg id="question1Text" height="500" width="300"></svg>
 </div>
 <div class="section">
 <h3 id="question2Title" class="title"></h3>
-<svg id="question2" height="500" width="300"></svg>
-<div id="question2Text">
-</div>
+<svg id="question2" height="500" width="200"></svg>
+<svg id="question2Text" height="500" width="300"></svg>
 </div>
 <div class="section">
 <h3 id="question3Title" class="title"></h3>
-<svg id="question3" height="500" width="300"></svg>
-<div id="question3Text">
-</div>
+<svg id="question3" height="500" width="200"></svg>
+<svg id="question3Text" height="500" width="300"></svg>
 </div>
 <div class="section">
 <h3 id="question4Title" class="title"></h3>
-<svg id="question4" height="500" width="300"></svg>
-<div id="question4Text">
-</div>
+<svg id="question4" height="500" width="200"></svg>
+<svg id="question4Text" height="500" width="300"></svg>
 </div>
 <div class="section">
 <h3 id="question5Title" class="title"></h3>
-<svg id="question5" height="500" width="300"></svg>
-<div id="question5Text">
-</div>
+<svg id="question5" height="500" width="200"></svg>
+<svg id="question5Text" height="500" width="300"></svg>
 </div>
 <!--Import the D3 Library (version 4 in this case)-->
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -105,8 +147,6 @@ var y = d3.scaleLinear()
 var color = d3.scaleOrdinal()
     .range(["#ccc", "#ffd700","#ffb14e","#fa8775","#ea5f94","#cd34b5","#9d02d7","#0000ff"]);
 
-d3.select("#country").text(country);
-
 queue()
     .defer(d3.csv, "20171013111831-SurveyExport.csv")
     .await(ready);
@@ -122,9 +162,45 @@ answers = [
   ["", "The makers of connected devices and apps", "My friends and family", "Non-profit organizations like Mozilla and Consumer Reports", "The government", "The media", "I just don't know who to trust"]
 ]
 
+// Text wrap function from stack overflow
+// https://stackoverflow.com/questions/24784302/wrapping-text-in-d3
+function wrap(text, width) {
+    text.each(function () {
+        var text = d3.select(this),
+            words = text.text().split(/\s+/).reverse(),
+            word,
+            line = [],
+            lineNumber = 0,
+            lineHeight = 1.1, // ems
+            x = text.attr("x"),
+            y = text.attr("y"),
+            dy = 0, //parseFloat(text.attr("dy")),
+            tspan = text.text(null)
+                        .append("tspan")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("dy", dy + "em");
+        while (word = words.pop()) {
+            line.push(word);
+            tspan.text(line.join(" "));
+            if (tspan.node().getComputedTextLength() > width) {
+                line.pop();
+                tspan.text(line.join(" "));
+                line = [word];
+                tspan = text.append("tspan")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("dy", ++lineNumber * lineHeight + dy + "em")
+                            .text(word);
+            }
+        }
+    });
+}
+
 // Import the data. Most of the drawing code goes in here.
-function getAnswerCounts(values, question) {
+function getAnswerCounts(values, question, i) {
   var dict = {}
+  var a = answers[i];
   values.forEach(function(d) {
     var answer = d[question];
     if (answer in dict) {
@@ -133,6 +209,12 @@ function getAnswerCounts(values, question) {
       dict[answer] = 1
     }
   });
+
+  a.forEach(function(d) {
+    if (!(d in dict)) {
+      dict[d] = 0;
+    }
+  })
 
   return dict;
 }
@@ -148,13 +230,16 @@ function getItemValue(data, item) {
   return result;
 }
 function ready(error, data) {
+  d3.select('#loading').style('display', 'none');
+  d3.select('#country').style('display', 'block').text(country);
+
   var grouped = d3.nest().key(function(d){
                       return (d["Country or Region (optional)"] ? d["Country or Region (optional)"] : d["Country"]); })
                   .rollup(function(v) {
                     var results = []
                     var length = v.length;
-                    questions.forEach(function(question) {
-                      var items = getAnswerCounts(v, question);
+                    questions.forEach(function(question, i) {
+                      var items = getAnswerCounts(v, question, i);
                       items['question'] = question;
                       items["length"] = length;
                       results.push(items);
@@ -191,7 +276,7 @@ function ready(error, data) {
       .data(series)
       .enter().append("g")
         .attr("fill", function(d) { return color(d.key); })
-        .attr("id", function(d){console.log(d.key);return d.key;})
+        .attr("id", function(d){return d.key;})
       .selectAll("rect")
       .data(function(d) { return d; })
       .enter().append("rect")
@@ -230,7 +315,27 @@ function ready(error, data) {
             .duration(500)
             .style("opacity", 0);
         })
+
+    // create a legend
+  var legend = d3.select(`#question${i}Text`)
+                  .selectAll(".legend")
+                  .data(keys)
+                  .enter().append("g")
+                  .attr("class", "legend")
+                  .attr("transform", function(d,j) {
+                    return `translate(-160, ${j*40})`;
+                  });
+  legend.append("rect")
+        .attr("x", width - 18).attr("width", 18)
+        .attr("height", 18).style("fill", color);
+
+  legend.append("text").attr("x", width+4).attr("y", 9)
+        .attr("dy", ".35rem").style("text-anchor", "start")
+        .text(function(d){return d ? d : "No Response";})
+        .call(wrap, 250);
   });
+
+ 
 
 };
 </script>
