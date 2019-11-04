@@ -146,7 +146,7 @@ function ready(error, data) {
     color.domain(keys);
 
     var questionData = [countryData[i]];
-    
+
 
     var series = d3.stack().keys(keys).offset(d3.stackOffsetDiverging)(questionData);
 
@@ -169,7 +169,7 @@ function ready(error, data) {
         .attr("class", "axis")
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisTop(x));
-  
+
   });
 
 };
