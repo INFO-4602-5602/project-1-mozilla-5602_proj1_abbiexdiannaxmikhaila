@@ -23,7 +23,7 @@ if you would like, you may unzip the data.zip and run the files yourself using t
 unzip data.zip
 python3 -m http.server 8000
 ```
-**You must run the project using the csv and json in the data.zip as we have cleaned a lot of the countries and some ascii errors that were in the original csv**
+**Note: You must run the project using both the csv and json files in the data.zip, as we have cleaned a lot of the countries and some ascii errors that were in the original csv.**
 
 ## What are the visualizations
 Our project consists of two main visualizations (the world/choropleth map and the ordinal, categorical plot) and a single country detail view (the 6 question stacked bar graphs).
