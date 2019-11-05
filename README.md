@@ -51,7 +51,7 @@ To link this visualization with the country detail, we again implemented the fea
 ### Roles of Team Members
 **Abbie:** Clean the csv file with Mikhaila so the data matches with the world_countries.json and can be graphed to the geographical data. Wrote the tooltip code that was reused on each of the pages and the mouseover, mouseleave, click event handlers. Wrote the design process in the readme.
 
-**Dianna:** Concept development for geographical visualization, concept development, collected resources, and implemented base for scatter.html. Prototyped/sketched visualizations for the bubble chart. Wrote the descriptions of the visualizations in the readme. 
+**Dianna:** Concept development for geographical visualization; Concept development, collected resources, and implemented base for the second vis (scatter.html). Prototyped/sketched visualizations for the bubble chart. Wrote the descriptions of the visualizations in the readme. 
 
 **Mikhaila:** Collected resources to help use as examples in creating the visualizations. Implemented the base for geographical map visualization and worked with Abbie to clean the csv file so that the world_countries.json matched more of the countries in the Mozilla survey. Prototyping/sketching different visualizations for the 6 questions with radio answers in survey with Abbie. Worked with Dianna to implement the categorical scatterplot (helped reorganize the data and built in some randomized offsets so you could see more of the points). Added a simple navigation bar to move between pages.
 
