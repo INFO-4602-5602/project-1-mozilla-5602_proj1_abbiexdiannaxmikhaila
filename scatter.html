@@ -38,8 +38,57 @@ div.tooltip {
     display: inline-block;
 }
 
+.sidenav {
+  height: 100vh;
+  width: 40px;
+  top: 0;
+  right: 0;
+  position: fixed;
+  background: lightgray;
+}
+.button-group {
+  display: inline-block;
+}
+
+.button:not(:last-child) {
+}
+
+.button {
+  padding: 5px;
+  display: inline-block;
+  margin-right: 5px;
+  box-sizing: border-box;
+}
+
+.button:hover {
+  opacity: .65;
+}
+
+.icon {
+  opacity: .8;
+}
+
+.icon {
+  height: 40px;
+  width: 40px;
+}
+
+.world {
+  background: url("/icons/world.svg") no-repeat scroll right center ;
+  background-origin: content-box;
+}
+
+.scatterplot {
+  background: url("/icons/scatterplot.svg") no-repeat scroll right center ;
+  background-origin: content-box;
+}
 </style>
 <body>
+<div class="sidenav">
+  <a title="World Map View" href="/index.html" class="button world icon"></a>
+  <a title="Plot of Fear vs. Tech Proficiency" href="/scatter.html" class="button icon scatterplot"></a>
+</div>
+<h1 id="loading">Loading.....</h1>
 <!--Import the D3 Library (version 4 in this case)-->
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <!--Source: https://bl.ocks.org/sebg/6f7f1dd55e0c52ce5ee0dac2b2769f4b-->
@@ -56,7 +105,7 @@ var tooltip = d3.select("body").append("div")
     .style("opacity", 0);
 // Set up the bounds of the visualization
 var margin = {top: 20, right: 20, bottom: 30, left: 300};
-var width = 1200 - margin.right - margin.left;
+var width = 1300 - margin.right - margin.left;
 var height = 650 - margin.top - margin.bottom;
 
 // Set up the scales (the pieces that will convert from the data to the screen)
@@ -73,6 +122,12 @@ var color = d3.scaleOrdinal(d3.schemeCategory20);
 var xAxis = d3.axisBottom(x);
 var yAxis = d3.axisLeft(y);
 
+var title = d3.select("body").append("h1")
+  .attr("x", (width / 2))
+  .attr("y", 0 - (margin.top / 3))
+  .attr("text-anchor", "middle")
+  .style('margin-bottom', 0);
+
 // Set up an SVG that gives us a canvas to draw on
 var svg = d3.select("body").append("svg")
             .attr("width", width + margin.left + margin.right)
@@ -80,13 +135,7 @@ var svg = d3.select("body").append("svg")
             .append("g")
               .attr("transform", "translate("+margin.left + "," + margin.top + ")");
 
-              svg.append("text")
-                    .attr("x", (width / 2))
-                    .attr("y", 0 - (margin.top / 3))
-                    .attr("text-anchor", "middle")
-                    .style("font-size", "16px")
-                    .style("text-decoration", "underline")
-                    .text("Is there a connection between technical knowledge and fear?");
+              
 function wrap(text, width) {
   text.each(function() {
     var text = d3.select(this),
@@ -112,6 +161,9 @@ function wrap(text, width) {
 }
 // Import the data. Most of the drawing code goes in here.
 d3.csv("20171013111831-SurveyExport.csv", function(error, data) {
+  d3.select('#loading').style('display', 'none');
+  title.text("Is there a connection between technical knowledge and fear?");
+
   // Create some variables that let us hold the different columns we'll want to index into
   var x_val = "I consider myself:";
   var y_val = "Thinking about a future in which so much of your world is connected to the internet leaves you feeling:";
@@ -197,7 +249,8 @@ d3.csv("20171013111831-SurveyExport.csv", function(error, data) {
      .attr("class", "y axis")
      .call(yAxis)
         .selectAll(".tick text")
-              .call(wrap, 300);
+              .attr("y", -5)
+              .call(wrap, 250);
 
 
             

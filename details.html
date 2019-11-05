@@ -44,6 +44,14 @@ div.tooltip {
 .title {
   width: 400px;
 }
+.sidenav {
+  height: 100vh;
+  width: 40px;
+  top: 0;
+  right: 0;
+  position: fixed;
+  background: lightgray;
+}
 .button-group {
   display: inline-block;
 }
@@ -55,6 +63,7 @@ div.tooltip {
   padding: 5px;
   display: inline-block;
   margin-right: 5px;
+  box-sizing: border-box;
 }
 
 .button:hover {
@@ -66,8 +75,8 @@ div.tooltip {
 }
 
 .icon {
-  height: 50px;
-  width: 50px;
+  height: 40px;
+  width: 40px;
 }
 
 .world {
@@ -81,13 +90,10 @@ div.tooltip {
 }
 </style>
 <body>
-<div class="header">
-  <div class="button-group">
-    <a href="/index.html" class="button world icon"></a>
-    <a href="/scatter.html" class="button icon scatterplot"></a>
-  </div>
+<div class="sidenav">
+  <a title="World Map View" href="/index.html" class="button world icon"></a>
+  <a title="Plot of Fear vs. Tech Proficiency" href="/scatter.html" class="button icon scatterplot"></a>
 </div>
-<div>
 <h1 id="loading">Loading.....</h1>
 <h1 style="display:none;" id="country"></h1>
 </div>
