@@ -24,7 +24,7 @@ unzip data.zip
 python3 -m http.server 8000
 ```
 
-##What are the visualizations
+## What are the visualizations
 Our project consists of two main visualizations (the world/choropleth map and the ordinal, categorical plot) and a single country detail view (the 6 question stacked bar graphs).
 
 Our first visualization comes in the form of **a chorepleth map**, with the lightest countries being the ones with most respondents, getting darker as the number of responses decreases (essentially, the darker the shade gets the more desolate the data as the gradient legend shows.) If you hover over a countries borders, you will get a tooltip that gives you the country name and the total respondents from that country. Upon clicking on a country on the map (given that there were survey responses from that country), you will be directed to that country’s details page which contains some **stacked bar graphs** that show the percentage of each answer to the survey questions. This was designed to make it easy to view the relative differences in responses and to visualize which answers are most prevalent for each country (e.g. for China you can quickly see that they are most excited about life being made easier through technology and that their biggest concern is a loss of privacy.) 
@@ -36,7 +36,7 @@ Via the tooltip, you can hover over a bubble to see the country and how many peo
 ### Wishes that we didn't get to
 We really wanted to inspect privacy and data laws in each country as well and prices on different technologies. However, we did not have time to collect that data for the 232 different countries and regions that were in the Mozilla survey data. Our thoughts around using this additional information was to be able to explore some of the biases that most likely exist in this survey data. 
 
-##Design Process
+## Design Process
 In order to familiarize ourselves with the data, we all took the survey, read the accompanying blog posts, and looked through the csv. We suspected that the phrasing of the survey questions and answers might have produced a geographical differences in the responses. For example, their description of "most technically savvy" involved having built a computer, which feels like a cultural phenomenon. We also thought we might see interesting variation from country to country in the products people used due to price and popularity. We wondered whether this would impact people’s responses to questions. 
 
 This initial conversation made us realize pretty quickly we wanted to build an explorable map. We implemented the map and coded the countries by color according to how many survey respondents we had. It took us several iterations to clean the data with the following changes: (1) Respondent-reported "Country or Region" was an optional field, so if this was blank we used the automatically populated "Country" field (2) Some countries had different names in the survey data, and (3) the survey data did not match the map data exactly. We added a tooltip to the map so when the user mouses over a country, they can see the name of the country and the number of respondents. Though the data might still be a little messy, after what cleaning we did, we were able to better group and read the data from the csv.
@@ -47,7 +47,7 @@ We wanted to add a second overview visualization. Where our map is meant not onl
 
 To link this visualization with the country detail, we again implemented the feature of clicking on a point and going to that country's detail page. Lastly, we included a side navigation on our visualizations to allow someone to easily jump between the two main visualizations or get back after entering the details page.
 
-###Roles of Team Members
+### Roles of Team Members
 **Abbie:** Clean the csv file with Mikhaila so the data matches with the world_countries.json and can be graphed to the geographical data. Wrote the tooltip code that was reused on each of the pages and the mouseover, mouseleave, click event handlers. Wrote the design process in the readme.
 
 **Dianna:** Concept development for geographical visualization, concept development and wrote original code and set up scaffolds for the bubble chart, and then prototyped visualizations for the bubble chart with Mikhaila. Wrote the descriptions of the visualizations in the readme. 
