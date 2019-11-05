@@ -24,4 +24,13 @@ unzip data.zip
 python3 -m http.server 8000
 ```
 
-## What are the visualizations
+##What are the visualizations
+###World Map
+
+###Ordinal Categorical Scatterplot
+
+###Stacked Bar Charts
+
+##Design Process
+
+###Roles of Team Members
